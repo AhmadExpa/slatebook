@@ -41,13 +41,15 @@ Deno.serve(async (req) => {
     })
     if (createError || !created.user) return json({ error: createError?.message || 'Unable to create the account.' }, 400)
 
-    const { error: profileError } = await access.adminClient
+    const { data: profile, error: profileError } = await access.adminClient
       .from('profiles')
       .update({ username, display_name: displayName, role, is_active: true })
       .eq('id', created.user.id)
-    if (profileError) {
+      .select('id')
+      .maybeSingle()
+    if (profileError || !profile) {
       await access.adminClient.auth.admin.deleteUser(created.user.id)
-      return json({ error: profileError.message }, 400)
+      return json({ error: profileError?.message || 'The Auth account was created but its Slatebook profile could not be prepared.' }, 400)
     }
 
     return json({ ok: true, user_id: created.user.id, username, role })
@@ -55,4 +57,3 @@ Deno.serve(async (req) => {
     return json({ error: error instanceof Error ? error.message : 'Unable to create the account.' }, 500)
   }
 })
-
