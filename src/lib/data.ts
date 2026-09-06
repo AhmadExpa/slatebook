@@ -123,9 +123,9 @@ export async function ensureDefaultLeadForm(): Promise<void> {
   unwrap(null, error)
 }
 
-export async function inviteUser(email: string, displayName: string, role: Role): Promise<void> {
-  const { error } = await getSupabase().functions.invoke('invite-user', {
-    body: { email, display_name: displayName, role },
+export async function createUser(username: string, password: string, displayName: string, role: Role): Promise<void> {
+  const { error } = await getSupabase().functions.invoke('create-user', {
+    body: { username, password, display_name: displayName, role },
   })
   unwrap(null, error)
 }

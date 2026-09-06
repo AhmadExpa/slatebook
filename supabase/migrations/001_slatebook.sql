@@ -18,6 +18,7 @@ exception when duplicate_object then null; end $$;
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   email text not null default '',
+  username text,
   display_name text,
   role public.app_role not null default 'user',
   is_active boolean not null default false,
@@ -123,15 +124,16 @@ security definer
 set search_path = public
 as $$
 begin
-  insert into public.profiles (id, email, display_name, role)
+  insert into public.profiles (id, email, username, display_name, role)
   values (
     new.id,
     coalesce(new.email, ''),
+    lower(coalesce(new.raw_user_meta_data ->> 'username', split_part(coalesce(new.email, ''), '@', 1))),
     coalesce(new.raw_user_meta_data ->> 'display_name', split_part(coalesce(new.email, ''), '@', 1)),
     -- Never trust client-controlled Auth metadata for privilege assignment.
     'user'::public.app_role
   )
-  on conflict (id) do update set email = excluded.email;
+  on conflict (id) do update set email = excluded.email, username = excluded.username;
   return new;
 end;
 $$;
@@ -140,15 +142,18 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created after insert on auth.users for each row execute procedure public.handle_new_user();
 
 -- Backfill Auth users that existed before this migration was installed.
-insert into public.profiles (id, email, display_name, role, is_active)
+insert into public.profiles (id, email, username, display_name, role, is_active)
 select
   u.id,
   coalesce(u.email, ''),
+  lower(coalesce(u.raw_user_meta_data ->> 'username', split_part(coalesce(u.email, ''), '@', 1))),
   coalesce(u.raw_user_meta_data ->> 'display_name', split_part(coalesce(u.email, ''), '@', 1)),
   'user'::public.app_role,
   false
 from auth.users u
-on conflict (id) do update set email = excluded.email;
+on conflict (id) do update set email = excluded.email, username = excluded.username;
+
+create unique index if not exists profiles_username_idx on public.profiles(lower(username)) where username is not null;
 
 create or replace function public.is_active_user()
 returns boolean
@@ -591,5 +596,5 @@ grant execute on function public.search_admin_records(uuid, text, integer, integ
 grant execute on function public.set_record_field_validation(uuid, uuid, text) to authenticated;
 grant execute on function public.ensure_default_lead_form() to authenticated;
 
--- The invite-user and manage-user Edge Functions use the service role only on
+-- The create-user and manage-user Edge Functions use the service role only on
 -- the server side. They must verify public.is_admin() before each operation.

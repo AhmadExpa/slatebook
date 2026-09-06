@@ -7,6 +7,7 @@ export type ValidationStatus = 'valid' | 'invalid'
 export interface Profile {
   id: string
   email: string
+  username: string | null
   display_name: string | null
   role: Role
   is_active: boolean

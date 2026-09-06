@@ -1,5 +1,10 @@
 import type { FieldType, FieldValue, FormField, Visibility } from './types'
 
+export function normalizeLoginIdentifier(identifier: string): string {
+  const normalized = identifier.trim().toLowerCase()
+  return normalized.includes('@') ? normalized : `${normalized}@users.slatebook.local`
+}
+
 export function formatDate(value: string): string {
   return new Intl.DateTimeFormat(undefined, {
     month: 'short',

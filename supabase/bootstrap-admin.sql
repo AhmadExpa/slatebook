@@ -1,15 +1,16 @@
 -- Run after 001_slatebook.sql and after creating the first Auth user.
 -- This is the UUID you provided. Confirm it belongs to the intended account.
-insert into public.profiles (id, email, display_name, role, is_active)
+insert into public.profiles (id, email, username, display_name, role, is_active)
 select
   u.id,
   coalesce(u.email, ''),
+  lower(coalesce(u.raw_user_meta_data ->> 'username', split_part(coalesce(u.email, ''), '@', 1))),
   coalesce(u.raw_user_meta_data ->> 'display_name', split_part(coalesce(u.email, ''), '@', 1)),
   'user'::public.app_role,
   false
 from auth.users u
 where u.id = 'd3181c54-d0ac-42ef-9630-fd58fb5c1205'
-on conflict (id) do update set email = excluded.email;
+on conflict (id) do update set email = excluded.email, username = excluded.username;
 
 update public.profiles
 set role = 'admin', is_active = true
