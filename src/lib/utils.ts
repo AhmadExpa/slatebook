@@ -59,6 +59,9 @@ export function validateValue(field: FormField, value: FieldValue): string | nul
   if (field.field_type === 'card' && !isValidCardNumber(String(value))) {
     return `${field.label} is not a valid card number.`
   }
+  if (field.field_type === 'cvv' && !/^\d{3,4}$/.test(String(value))) {
+    return `${field.label} must be 3 or 4 digits.`
+  }
   if (field.field_type === 'select' && !field.options.includes(String(value))) {
     return `${field.label} must use one of the available options.`
   }
@@ -103,6 +106,7 @@ export function fieldInputType(fieldType: FieldType): string {
   if (fieldType === 'email') return 'email'
   if (fieldType === 'phone') return 'tel'
   if (fieldType === 'card') return 'text'
+  if (fieldType === 'cvv') return 'password'
   return 'text'
 }
 

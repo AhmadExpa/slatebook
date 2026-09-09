@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isEditableByUser, isValidCardNumber, sanitizeDisplayValue, toCsvCell, validateValue } from './utils'
+import { isEditableByUser, isValidCardNumber, normalizeLoginIdentifier, sanitizeDisplayValue, toCsvCell, validateValue } from './utils'
 import type { FormField } from './types'
 
 const baseField: FormField = {
@@ -39,6 +39,18 @@ describe('card validation', () => {
     expect(isValidCardNumber('4111 1111 1111 1111')).toBe(true)
     expect(isValidCardNumber('4111 1111 1111 1112')).toBe(false)
     expect(validateValue({ ...baseField, field_type: 'card', label: 'Card number' }, '4111111111111111')).toBeNull()
+  })
+
+  it('validates CVV format without treating it as a required field', () => {
+    expect(validateValue({ ...baseField, field_type: 'cvv', label: 'CVV' }, '123')).toBeNull()
+    expect(validateValue({ ...baseField, field_type: 'cvv', label: 'CVV' }, '12')).toContain('3 or 4 digits')
+  })
+})
+
+describe('username login', () => {
+  it('maps usernames to the internal Auth email alias', () => {
+    expect(normalizeLoginIdentifier(' Jordan.Lee ')).toBe('jordan.lee@users.slatebook.local')
+    expect(normalizeLoginIdentifier('Admin@company.com')).toBe('admin@company.com')
   })
 })
 

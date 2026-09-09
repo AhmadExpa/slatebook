@@ -1,7 +1,7 @@
 export type Role = 'admin' | 'user'
 export type FormStatus = 'active' | 'archived'
 export type Visibility = 'visible' | 'masked' | 'admin_only'
-export type FieldType = 'text' | 'textarea' | 'number' | 'date' | 'expiry' | 'email' | 'phone' | 'card' | 'select'
+export type FieldType = 'text' | 'textarea' | 'number' | 'date' | 'expiry' | 'email' | 'phone' | 'card' | 'cvv' | 'select'
 export type ValidationStatus = 'valid' | 'invalid'
 
 export interface Profile {
@@ -85,6 +85,7 @@ export const FIELD_TYPE_LABELS: Record<FieldType, string> = {
   email: 'Email',
   phone: 'Phone',
   card: 'Card number',
+  cvv: 'CVV (not stored)',
   select: 'Dropdown',
 }
 

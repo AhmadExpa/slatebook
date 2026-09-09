@@ -30,4 +30,6 @@ The service-role key is used only by Supabase Edge Functions and must never be a
 
 The application intentionally does not contain hardcoded credentials. Create the first administrator in Supabase Auth, then use the admin dashboard to create team-member or manager accounts. Supabase hashes all passwords, and credentials are never stored in the frontend or source control.
 
+Slatebook uses one `Lead intake` form. Its existing basic fields remain available, only Phone is required, and administrators can add optional fields to that form. The CVV field is validated during entry but discarded before the record is saved; it is never included in searches, projections, or CSV exports.
+
 The default form includes full card-number storage for testing, but real payment-card data should not be used until the deployment has been designed and assessed for PCI DSS compliance. Prefer test card numbers or replace the card field with a payment-provider token before production use.

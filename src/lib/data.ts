@@ -14,7 +14,7 @@ export async function getProfile(userId: string): Promise<Profile> {
 }
 
 export async function listForms(includeArchived: boolean): Promise<Form[]> {
-  let query = getSupabase().from('forms').select('*').order('created_at', { ascending: false })
+  let query = getSupabase().from('forms').select('*').eq('name', 'Lead intake').order('created_at', { ascending: false })
   if (!includeArchived) query = query.eq('status', 'active')
   const { data, error } = await query
   return unwrap((data || []) as Form[], error)
