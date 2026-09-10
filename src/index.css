@@ -337,8 +337,13 @@ input:focus, textarea:focus, select:focus { border-color: #70bab0; box-shadow: 0
 .drawer-backdrop { justify-content: flex-end; align-items: stretch; padding: 0; }
 .record-drawer { width: min(530px, 100%); background: white; box-shadow: -18px 0 60px rgba(16, 42, 51, .18); display: flex; flex-direction: column; animation: drawer-in .24s ease; }
 @keyframes drawer-in { from { transform: translateX(100%); } to { transform: translateX(0); } }
-.centered-record-backdrop { justify-content: center; align-items: center; padding: 20px; }
-.record-modal { width: min(760px, 100%); max-height: calc(100vh - 40px); border-radius: 18px; overflow: hidden; box-shadow: 0 25px 75px rgba(16, 42, 51, .24); animation: modal-in .22s ease; }
+.centered-record-backdrop { justify-content: center; align-items: center; padding: 0; }
+.record-modal { width: 100vw; height: 100vh; max-height: none; border-radius: 0; overflow: hidden; box-shadow: none; animation: modal-in .22s ease; }
+.record-modal .drawer-header { padding: 25px clamp(28px, 8vw, 120px) 19px; }
+.record-modal .drawer-security { margin-left: clamp(28px, 8vw, 120px); margin-right: clamp(28px, 8vw, 120px); }
+.record-modal .drawer-form { flex: 1; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 20px; padding: 17px clamp(28px, 8vw, 120px) 25px; overflow: visible; align-content: start; }
+.record-modal .drawer-form > .input-hint, .record-modal .drawer-form > .drawer-submit { grid-column: 1 / -1; }
+.record-modal .drawer-field textarea { min-height: 70px; max-height: 90px; }
 @keyframes modal-in { from { opacity: 0; transform: translateY(12px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
 .close-confirm-backdrop { position: absolute; inset: 0; z-index: 2; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(20, 38, 47, .3); }
 .close-confirm { width: min(410px, 100%); padding: 24px; border-radius: 15px; background: white; box-shadow: 0 25px 70px rgba(15, 43, 54, .25); }
@@ -425,4 +430,8 @@ input:focus, textarea:focus, select:focus { border-color: #70bab0; box-shadow: 0
   .modal { padding: 19px; }
   .drawer-header, .drawer-form { padding-left: 20px; padding-right: 20px; }
   .drawer-security { margin-left: 20px; margin-right: 20px; }
+  .record-modal .drawer-header, .record-modal .drawer-form { padding-left: 20px; padding-right: 20px; }
+  .record-modal .drawer-security { margin-left: 20px; margin-right: 20px; }
+  .record-modal .drawer-form { grid-template-columns: 1fr; overflow-y: auto; }
+  .record-modal .drawer-form > .input-hint, .record-modal .drawer-form > .drawer-submit { grid-column: auto; }
 }

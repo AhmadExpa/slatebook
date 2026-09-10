@@ -435,7 +435,7 @@ function ValidationBadge({ status }: { status: 'valid' | 'invalid' }) {
   return <span className={`field-validation ${status}`} title={status === 'valid' ? 'Validated by admin' : 'Marked invalid by admin'}>{status === 'valid' ? <Check size={11} /> : <X size={11} />}</span>
 }
 
-function RecordEditor({ form, fields, record, isAdmin, agentName, onClose, onSave, presentation = 'drawer' }: { form: Form; fields: FormField[]; record: SafeRecord | RawRecord | null; isAdmin: boolean; agentName: string; onClose: () => void; onSave: (values: FieldValues) => Promise<void>; presentation?: 'drawer' | 'modal' }) {
+function RecordEditor({ form, fields, record, isAdmin, agentName, onClose, onSave, presentation = 'modal' }: { form: Form; fields: FormField[]; record: SafeRecord | RawRecord | null; isAdmin: boolean; agentName: string; onClose: () => void; onSave: (values: FieldValues) => Promise<void>; presentation?: 'drawer' | 'modal' }) {
   const raw = record && 'raw_values' in record ? record.raw_values : record?.safe_values
   const isNew = !record
   const [values, setValues] = useState<FieldValues>({ ...(isNew ? { agent_name: agentName } : {}), ...(raw || {}) })
