@@ -1,5 +1,5 @@
 import type { Form, FormField, RawRecord } from './types'
-import { toCsvCell } from './utils'
+import { isIncludedLeadField, toCsvCell } from './utils'
 
 export function downloadCsv(records: RawRecord[], forms: Form[], fieldsByForm: Map<string, FormField[]>): void {
   if (!records.length) throw new Error('There are no records to export for this selection.')
@@ -10,7 +10,7 @@ export function downloadCsv(records: RawRecord[], forms: Form[], fieldsByForm: M
   const columns: Array<{ key: string; label: string }> = []
 
   for (const record of records) {
-    const fields = fieldsByForm.get(record.form_id) || []
+    const fields = (fieldsByForm.get(record.form_id) || []).filter(isIncludedLeadField)
     for (const field of fields) {
       const key = allForms ? `${record.form_id}:${field.field_key}` : field.field_key
       if (!columnKeys.has(key)) {
@@ -22,7 +22,7 @@ export function downloadCsv(records: RawRecord[], forms: Form[], fieldsByForm: M
 
   const headers = ['Record ID', ...(allForms ? ['Form'] : []), 'Created at', 'Updated at', 'Created by', ...columns.map((column) => column.label)]
   const rows = records.map((record) => {
-    const fields = fieldsByForm.get(record.form_id) || []
+    const fields = (fieldsByForm.get(record.form_id) || []).filter(isIncludedLeadField)
     const fieldByKey = new Map(fields.map((field) => [field.field_key, field]))
     const values = columns.map((column) => {
       if (allForms && !column.key.startsWith(`${record.form_id}:`)) return ''

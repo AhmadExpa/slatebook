@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatCardInput, formatExpiryInput, isEditableByUser, isValidCardNumber, normalizeLoginIdentifier, sanitizeDisplayValue, toCsvCell, validateValue } from './utils'
+import { formatCardInput, formatExpiryInput, isEditableByUser, isIncludedLeadField, isValidCardNumber, normalizeLoginIdentifier, sanitizeDisplayValue, toCsvCell, validateValue } from './utils'
 import type { FormField } from './types'
 
 const baseField: FormField = {
@@ -63,6 +63,13 @@ describe('input formatting', () => {
   it('normalizes three or four expiry digits to MM/YY', () => {
     expect(formatExpiryInput('927')).toBe('09/27')
     expect(formatExpiryInput('0927')).toBe('09/27')
+  })
+})
+
+describe('fixed lead fields', () => {
+  it('does not include zip code', () => {
+    expect(isIncludedLeadField({ field_key: 'zipcode' })).toBe(false)
+    expect(isIncludedLeadField({ field_key: 'phone' })).toBe(true)
   })
 })
 

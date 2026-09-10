@@ -112,6 +112,10 @@ export function isEditableByUser(field: FormField): boolean {
   return field.visibility === 'visible' && !field.is_archived
 }
 
+export function isIncludedLeadField(field: Pick<FormField, 'field_key'>): boolean {
+  return field.field_key !== 'zipcode'
+}
+
 export function fieldInputType(fieldType: FieldType): string {
   if (fieldType === 'number') return 'number'
   if (fieldType === 'date') return 'date'

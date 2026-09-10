@@ -55,7 +55,7 @@ import {
   type Role,
   type SafeRecord,
 } from './lib/types'
-import { fieldInputType, formatCardInput, formatDate, formatDateTime, formatExpiryInput, initials, isEditableByUser, isValidCardNumber, normalizeLoginIdentifier, validateValue } from './lib/utils'
+import { fieldInputType, formatCardInput, formatDate, formatDateTime, formatExpiryInput, initials, isEditableByUser, isIncludedLeadField, isValidCardNumber, normalizeLoginIdentifier, validateValue } from './lib/utils'
 
 type View = 'overview' | 'records' | 'forms' | 'users'
 type Toast = { type: 'success' | 'error'; message: string }
@@ -357,7 +357,7 @@ function FixedFormPreview({ form, onNavigate }: { form: Form; onNavigate: (view:
       .finally(() => setLoading(false))
   }, [form.id])
 
-  const activeFields = fields.filter((field) => !field.is_archived && field.field_key !== 'cvv')
+  const activeFields = fields.filter((field) => !field.is_archived && isIncludedLeadField(field) && field.field_key !== 'cvv')
   return <section className="panel builder-panel"><div className="builder-header"><div><p className="eyebrow">Fixed form</p><h2>{form.name}</h2></div><span className="status-pill active"><span />Active</span></div><p className="panel-copy">This is the only form in the workspace. Every field stays available; only Phone is required. Full card numbers are protected from agents.</p><div className="field-list-heading"><div><span className="eyebrow">Available fields</span><small>Use Customer records to add, validate, or search leads.</small></div><button className="button primary compact" onClick={() => onNavigate('records', form.id)}><Plus size={15} /> Open form</button></div>{loading ? <LoadingBlock /> : activeFields.length ? <div className="builder-fields">{activeFields.map((field, index) => <div className="builder-field" key={field.id}><div className="field-order">{String(index + 1).padStart(2, '0')}</div><div className="builder-field-main"><strong>{field.label}</strong><span>{field.field_type === 'card' ? 'Card number · admin only' : field.field_key === 'phone' ? 'Phone · required' : field.visibility === 'visible' ? 'Visible to agents' : field.visibility === 'masked' ? 'Masked for agents' : 'Admin only'}</span></div><span className={`visibility-chip ${field.visibility === 'admin_only' ? 'private' : field.visibility === 'masked' ? 'masked' : 'public'}`}>{field.visibility === 'admin_only' ? <Lock size={12} /> : field.visibility === 'masked' ? <ShieldCheck size={12} /> : <Check size={12} />}{field.visibility === 'admin_only' ? 'Admin only' : field.visibility === 'masked' ? 'Validated suffix' : 'Visible'}</span></div>)}</div> : <EmptyState compact icon={<SlidersHorizontal size={19} />} title="Lead intake is empty" description="The fixed form fields will appear after the workspace is initialized." />}</section>
 }
 
@@ -427,7 +427,7 @@ function RecordsView({ profile, isAdmin, initialFormId, notify }: { profile: Pro
 
 function RecordRow({ record, fields, isAdmin, onOpen }: { record: SafeRecord | RawRecord; fields: FormField[]; isAdmin: boolean; onOpen: () => void }) {
   const values = isAdmin && 'raw_values' in record ? record.raw_values : record.safe_values
-  const previewFields = fields.filter((field) => field.visibility !== 'admin_only' || isAdmin).slice(0, 3)
+  const previewFields = fields.filter((field) => isIncludedLeadField(field) && (field.visibility !== 'admin_only' || isAdmin)).slice(0, 3)
   return <button className="record-row" onClick={onOpen}><div className="record-id"><div className="record-avatar">{record.form_name.slice(0, 1).toUpperCase()}</div><div><strong>{record.form_name}</strong><span>{formatDate(record.created_at)} · ID {record.record_id.slice(0, 8)}</span></div></div><div className="record-preview">{previewFields.map((field) => <span key={field.id}><small>{field.label}</small><strong>{values[field.field_key] === undefined || values[field.field_key] === null || values[field.field_key] === '' ? '—' : String(values[field.field_key])} {record.validations?.[field.id] && <ValidationBadge status={record.validations[field.id]} />}</strong></span>)}</div><div className="record-updated"><span>{formatDateTime(record.updated_at)}</span><ArrowRight size={16} /></div></button>
 }
 
@@ -444,7 +444,7 @@ function RecordEditor({ form, fields, record, isAdmin, agentName, onClose, onSav
   const [validating, setValidating] = useState('')
   const [error, setError] = useState('')
   const [showCloseConfirm, setShowCloseConfirm] = useState(false)
-  const allFields = fields.filter((field) => !field.is_archived && field.field_key !== 'cvv')
+  const allFields = fields.filter((field) => !field.is_archived && isIncludedLeadField(field) && field.field_key !== 'cvv')
   const accountType = String(values.account_type || '')
   const shownFields = allFields.filter((field) => {
     if (isAdmin) return true
