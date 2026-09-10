@@ -212,7 +212,7 @@ begin
   if not exists (select 1 from public.forms where id = p_form_id and name = 'Lead intake' and status = 'active') then
     raise exception 'This workspace uses the Lead intake form only';
   end if;
-  select coalesce(display_name, split_part(email, '@', 1)) into agent_name
+  select coalesce(username, display_name, split_part(email, '@', 1)) into agent_name
   from public.profiles where id = auth.uid();
   if exists (select 1 from public.form_fields where form_id = p_form_id and field_key = 'agent_name' and is_archived = false) then
     values_to_save := values_to_save || jsonb_build_object('agent_name', agent_name);
