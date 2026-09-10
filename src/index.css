@@ -354,6 +354,7 @@ input:focus, textarea:focus, select:focus { border-color: #70bab0; box-shadow: 0
 .admin-workspace .quick-actions { gap: 7px; }
 .admin-workspace .quick-actions button { border-color: #e7ecee; border-radius: 8px; background: #ffffff; padding: 9px 10px; }
 .admin-workspace .quick-actions button:hover { border-color: #b9d8d3; transform: none; }
+.admin-workspace .quick-actions button:first-child { display: none; }
 .admin-workspace .quick-icon.blue, .admin-workspace .quick-icon.purple, .admin-workspace .quick-icon.amber { color: #547c7a; background: #f0f5f4; }
 .admin-workspace .activity-panel { padding: 25px 23px; }
 .admin-workspace .activity-list { margin-top: 18px; }
