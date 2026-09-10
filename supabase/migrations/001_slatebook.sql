@@ -531,9 +531,7 @@ begin
   if lead_form_id is not null then
     update public.forms set status = 'archived' where id <> lead_form_id and status = 'active';
     update public.form_fields set is_required = (field_key = 'phone') where form_id = lead_form_id and is_archived = false;
-    insert into public.form_fields(form_id, field_key, label, field_type, is_required, visibility, mask_last_n, options, sort_order)
-    values (lead_form_id, 'cvv', 'CVV (not stored)', 'cvv', false, 'admin_only', null, '[]', 5)
-    on conflict (form_id, field_key) do update set label = excluded.label, field_type = excluded.field_type, is_required = false, visibility = 'visible';
+    -- CVV is intentionally not part of the active form.
     return lead_form_id;
   end if;
 
@@ -549,7 +547,6 @@ begin
     (lead_form_id, 'address', 'Address', 'textarea', false, 'visible', null, '[]', 2),
     (lead_form_id, 'phone', 'Phone', 'phone', true, 'visible', null, '[]', 3),
     (lead_form_id, 'card_information', 'Card information', 'card', false, 'admin_only', null, '[]', 4),
-    (lead_form_id, 'cvv', 'CVV (not stored)', 'cvv', false, 'admin_only', null, '[]', 5),
     (lead_form_id, 'expiry', 'Card expiry', 'expiry', false, 'visible', null, '[]', 6),
     (lead_form_id, 'zipcode', 'Zip code', 'text', false, 'visible', null, '[]', 7),
     (lead_form_id, 'account_type', 'Account type', 'select', false, 'visible', null, '["Card", "Checking account", "Both"]', 8),

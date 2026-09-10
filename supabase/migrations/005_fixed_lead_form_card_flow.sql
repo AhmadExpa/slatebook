@@ -1,5 +1,5 @@
 -- Fixed Lead intake form and safe card projection.
--- CVV is accepted only during entry, validated, and discarded before storage.
+-- CVV is not collected by the active form. Legacy CVV values are purged below.
 
 alter table public.form_fields drop constraint if exists form_fields_field_type_check;
 alter table public.form_fields add constraint form_fields_field_type_check
@@ -325,7 +325,6 @@ begin
     (lead_form_id, 'address', 'Address', 'textarea', false, 'visible', null, '[]', 2),
     (lead_form_id, 'phone', 'Phone', 'phone', true, 'visible', null, '[]', 3),
     (lead_form_id, 'card_information', 'Card information', 'card', false, 'admin_only', null, '[]', 4),
-    (lead_form_id, 'cvv', 'CVV (not stored)', 'cvv', false, 'admin_only', null, '[]', 5),
     (lead_form_id, 'expiry', 'Card expiry', 'expiry', false, 'visible', null, '[]', 6),
     (lead_form_id, 'zipcode', 'Zip code', 'text', false, 'visible', null, '[]', 7),
     (lead_form_id, 'account_type', 'Account type', 'select', false, 'visible', null, '["Card", "Checking account", "Both"]', 8),
