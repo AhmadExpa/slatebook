@@ -5,7 +5,7 @@ Slatebook is a Vercel-ready secure customer lead notepad. The browser app is a R
 ## Local setup
 
 1. Copy `.env.example` to `.env.local` and add the Supabase project URL and publishable key. The supplied project values are already in the ignored `.env.local` file in this workspace.
-2. Run `supabase/migrations/001_slatebook.sql` in the Supabase SQL editor. If this project already has the original Slatebook schema, run `003_direct_user_accounts.sql` and then `004_single_form_optional_fields.sql` instead of rerunning 001. If you created Auth users before running 001, also run `002_backfill_profiles.sql`.
+2. Run `supabase/migrations/001_slatebook.sql` in the Supabase SQL editor. If this project already has the original Slatebook schema, run `003_direct_user_accounts.sql`, `004_single_form_optional_fields.sql`, and `005_fixed_lead_form_card_flow.sql` instead of rerunning 001. If you created Auth users before running 001, also run `002_backfill_profiles.sql`.
 3. Create your first administrator in Supabase Dashboard → Authentication → Users → Add user. Use the email and set a password.
 4. In the SQL editor, replace the email in `supabase/bootstrap-admin.sql` and run it.
 5. Deploy the two functions from the project root:
@@ -30,6 +30,6 @@ The service-role key is used only by Supabase Edge Functions and must never be a
 
 The application intentionally does not contain hardcoded credentials. Create the first administrator in Supabase Auth, then use the admin dashboard to create team-member or manager accounts. Supabase hashes all passwords, and credentials are never stored in the frontend or source control.
 
-Slatebook uses one `Lead intake` form. Its existing basic fields remain available, only Phone is required, and administrators can add optional fields to that form. The CVV field is validated during entry but discarded before the record is saved; it is never included in searches, projections, or CSV exports.
+Slatebook uses one fixed `Lead intake` form. Its basic fields remain available, only Phone is required, and the form cannot be extended or edited from the dashboard. Card, expiry, and checking-account sections appear according to the selected account type. The full card number and CVV are never shown to regular users; after an administrator validates a card, only its last four digits are projected to them. CVV is validated during entry but discarded before the record is saved, so it is never included in searches, projections, or CSV exports—even for administrators.
 
 The default form includes full card-number storage for testing, but real payment-card data should not be used until the deployment has been designed and assessed for PCI DSS compliance. Prefer test card numbers or replace the card field with a payment-provider token before production use.

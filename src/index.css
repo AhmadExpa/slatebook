@@ -215,6 +215,9 @@ input:focus, textarea:focus, select:focus { border-color: #70bab0; box-shadow: 0
 .builder-field-main span { color: #94a1aa; font-size: 10px; margin-top: 4px; }
 .builder-field-main em { color: #c78352; font-style: normal; }
 .visibility-chip { display: inline-flex; align-items: center; gap: 5px; border-radius: 6px; padding: 6px 7px; white-space: nowrap; font-size: 9px; }
+.visibility-chip.public { color: #2f7d6d; background: #eaf6f1; }
+.visibility-chip.masked { color: #9b7541; background: #fbf3e9; }
+.visibility-chip.private { color: #a85f69; background: #fff0ef; }
 .status-success { color: #3e937b; background: #eaf6f1; }
 .status-warning { color: #ae7b44; background: #fbf3e9; }
 .status-danger { color: #b66969; background: #fff0ef; }

@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
 import {
-  Archive,
   ArrowRight,
   BarChart3,
   BookOpen,
@@ -17,7 +16,6 @@ import {
   LogOut,
   Menu,
   MoreHorizontal,
-  Pencil,
   Plus,
   RefreshCw,
   Search,
@@ -31,9 +29,7 @@ import {
 import { getErrorMessage, getSupabase, supabase, supabaseConfigured } from './lib/supabase'
 import type { Session } from '@supabase/supabase-js'
 import {
-  archiveField,
   createCustomerRecord,
-  createField,
   ensureDefaultLeadForm,
   getProfile,
   createUser,
@@ -45,15 +41,10 @@ import {
   searchSafeRecords,
   setRecordFieldValidation,
   updateAdminRecord,
-  updateField,
   updateSafeFields,
 } from './lib/data'
 import { downloadCsv } from './lib/csv'
 import {
-  FIELD_TYPE_LABELS,
-  VISIBILITY_LABELS,
-  type CreateFieldInput,
-  type FieldType,
   type FieldValue,
   type FieldValues,
   type Form,
@@ -62,9 +53,8 @@ import {
   type RawRecord,
   type Role,
   type SafeRecord,
-  type Visibility,
 } from './lib/types'
-import { fieldInputType, formatDate, formatDateTime, getVisibilityTone, initials, isEditableByUser, isValidCardNumber, normalizeLoginIdentifier, slugify, validateValue } from './lib/utils'
+import { fieldInputType, formatDate, formatDateTime, initials, isEditableByUser, isValidCardNumber, normalizeLoginIdentifier, validateValue } from './lib/utils'
 
 type View = 'overview' | 'records' | 'forms' | 'users'
 type Toast = { type: 'success' | 'error'; message: string }
@@ -201,11 +191,11 @@ function Workspace({ profile, onProfileChange, onSignOut }: { profile: Profile; 
       <aside className={`sidebar ${mobileNav ? 'open' : ''}`}>
         <div className="sidebar-top"><div className="brand-lockup"><div className="brand-mark"><BookOpen size={20} /></div><span>slatebook</span></div><button className="icon-button mobile-close" onClick={() => setMobileNav(false)}><X size={19} /></button></div>
         <div className="workspace-switcher"><div className="workspace-avatar">S</div><div><strong>Slatebook HQ</strong><span>Private workspace</span></div><ChevronDown size={16} /></div>
-        <nav className="main-nav"><span className="nav-label">Workspace</span><NavItem icon={<LayoutDashboard size={18} />} label="Overview" active={view === 'overview'} onClick={() => navigate('overview')} /><NavItem icon={<FileText size={18} />} label="Customer records" active={view === 'records'} onClick={() => navigate('records')} /><NavItem icon={<SlidersHorizontal size={18} />} label="Forms" active={view === 'forms'} onClick={() => navigate('forms')} />{profile.role === 'admin' && <><span className="nav-label admin-label">Admin console</span><NavItem icon={<Users size={18} />} label="Team access" active={view === 'users'} onClick={() => navigate('users')} /><NavItem icon={<BarChart3 size={18} />} label="Exports" active={false} onClick={() => navigate('records')} /></>}</nav>
+        <nav className="main-nav"><span className="nav-label">Workspace</span><NavItem icon={<LayoutDashboard size={18} />} label="Overview" active={view === 'overview'} onClick={() => navigate('overview')} /><NavItem icon={<FileText size={18} />} label="Customer records" active={view === 'records'} onClick={() => navigate('records')} /><NavItem icon={<SlidersHorizontal size={18} />} label="Lead intake" active={view === 'forms'} onClick={() => navigate('forms')} />{profile.role === 'admin' && <><span className="nav-label admin-label">Admin console</span><NavItem icon={<Users size={18} />} label="Team access" active={view === 'users'} onClick={() => navigate('users')} /><NavItem icon={<BarChart3 size={18} />} label="Exports" active={false} onClick={() => navigate('records')} /></>}</nav>
         <div className="sidebar-bottom"><div className="help-card"><LifeBuoy size={17} /><div><strong>Need a hand?</strong><span>Check your setup guide</span></div><ArrowRight size={15} /></div><div className="profile-chip"><div className="avatar">{initials(profile.display_name, profile.username || profile.email)}</div><div className="profile-meta"><strong>{profile.display_name || profile.username || profile.email.split('@')[0]}</strong><span>{profile.role === 'admin' ? 'Manager / administrator' : 'Team member'}</span></div><button className="icon-button" onClick={onSignOut} title="Sign out"><LogOut size={17} /></button></div></div>
       </aside>
       {mobileNav && <button className="sidebar-scrim" onClick={() => setMobileNav(false)} aria-label="Close navigation" />}
-      <main className="main-content"><header className="topbar"><button className="icon-button menu-trigger" onClick={() => setMobileNav(true)}><Menu size={21} /></button><div className="breadcrumbs"><span>Slatebook HQ</span><ArrowRight size={14} /><strong>{view === 'users' ? 'Team access' : view === 'records' ? 'Customer records' : view === 'forms' ? 'Forms' : 'Overview'}</strong></div><div className="topbar-actions"><div className="secure-badge"><span className="secure-dot" /> Encrypted workspace</div><button className="icon-button" onClick={() => notify('success', 'Everything is up to date.')} title="System status"><CheckCircle2 size={19} /></button></div></header><div className="page-content">{view === 'overview' && <Overview profile={profile} onNavigate={navigate} notify={notify} />}{view === 'forms' && <FormsView isAdmin={profile.role === 'admin'} onNavigate={navigate} notify={notify} />}{view === 'records' && <RecordsView profile={profile} isAdmin={profile.role === 'admin'} initialFormId={selectedFormId} notify={notify} />}{view === 'users' && profile.role === 'admin' && <UsersView currentUser={profile} notify={notify} onProfileChange={onProfileChange} />}</div></main>{toast && <div className={`toast ${toast.type}`}><CheckCircle2 size={17} />{toast.message}<button onClick={() => setToast(null)}><X size={15} /></button></div>}
+      <main className="main-content"><header className="topbar"><button className="icon-button menu-trigger" onClick={() => setMobileNav(true)}><Menu size={21} /></button><div className="breadcrumbs"><span>Slatebook HQ</span><ArrowRight size={14} /><strong>{view === 'users' ? 'Team access' : view === 'records' ? 'Customer records' : view === 'forms' ? 'Lead intake' : 'Overview'}</strong></div><div className="topbar-actions"><div className="secure-badge"><span className="secure-dot" /> Encrypted workspace</div><button className="icon-button" onClick={() => notify('success', 'Everything is up to date.')} title="System status"><CheckCircle2 size={19} /></button></div></header><div className="page-content">{view === 'overview' && <Overview profile={profile} onNavigate={navigate} notify={notify} />}{view === 'forms' && <FormsView isAdmin={profile.role === 'admin'} onNavigate={navigate} />}{view === 'records' && <RecordsView profile={profile} isAdmin={profile.role === 'admin'} initialFormId={selectedFormId} notify={notify} />}{view === 'users' && profile.role === 'admin' && <UsersView currentUser={profile} notify={notify} onProfileChange={onProfileChange} />}</div></main>{toast && <div className={`toast ${toast.type}`}><CheckCircle2 size={17} />{toast.message}<button onClick={() => setToast(null)}><X size={15} /></button></div>}
     </div>
   )
 }
@@ -246,7 +236,7 @@ function StatCard({ icon, label, value, detail, tone }: { icon: ReactNode; label
   return <div className="stat-card"><div className={`stat-icon ${tone}`}>{icon}</div><div><span>{label}</span><strong>{value}</strong><small>{detail}</small></div></div>
 }
 
-function FormsView({ isAdmin, onNavigate, notify }: { isAdmin: boolean; onNavigate: (view: View, formId?: string) => void; notify: (type: Toast['type'], message: string) => void }) {
+function FormsView({ isAdmin, onNavigate }: { isAdmin: boolean; onNavigate: (view: View, formId?: string) => void }) {
   const [forms, setForms] = useState<Form[]>([])
   const [selectedForm, setSelectedForm] = useState<Form | null>(null)
   const [loading, setLoading] = useState(true)
@@ -264,49 +254,27 @@ function FormsView({ isAdmin, onNavigate, notify }: { isAdmin: boolean; onNaviga
   }
   useEffect(() => { void reload() }, [isAdmin])
 
-  return <><PageHeader eyebrow="Lead intake" title="One form, one shared workflow." description={isAdmin ? 'Manage the fields in the existing Lead intake form. This workspace does not create additional forms.' : 'Use the Lead intake form to add or find a customer record.'} />{error && <ErrorBanner message={error} onRetry={() => void reload()} />}{loading ? <LoadingBlock /> : <div className="form-layout"><div className="form-list">{forms.map((form) => <FormCard key={form.id} form={form} isAdmin={isAdmin} selected={selectedForm?.id === form.id} onSelect={() => isAdmin ? setSelectedForm(form) : onNavigate('records', form.id)} />)}{!forms.length && <EmptyState icon={<SlidersHorizontal size={20} />} title="Lead intake is not available" description="Open the Overview as an administrator to initialize the workspace form." />}</div>{isAdmin && selectedForm && <FormBuilder form={selectedForm} notify={notify} />}</div>}</>
+  return <><PageHeader eyebrow="Lead intake" title="One form, one shared workflow." description="The same fixed form is used by agents and administrators. Phone is the only required field." />{error && <ErrorBanner message={error} onRetry={() => void reload()} />}{loading ? <LoadingBlock /> : <div className="form-layout"><div className="form-list">{forms.map((form) => <FormCard key={form.id} form={form} isAdmin={isAdmin} selected={selectedForm?.id === form.id} onSelect={() => isAdmin ? setSelectedForm(form) : onNavigate('records', form.id)} />)}{!forms.length && <EmptyState icon={<SlidersHorizontal size={20} />} title="Lead intake is not available" description="Open the Overview as an administrator to initialize the workspace form." />}</div>{selectedForm && <FixedFormPreview form={selectedForm} onNavigate={onNavigate} />}</div>}</>
 }
 
 function FormCard({ form, isAdmin, selected, onSelect }: { form: Form; isAdmin: boolean; selected: boolean; onSelect: () => void }) {
-  return <button className={`form-card ${selected ? 'selected' : ''}`} onClick={onSelect}><div className="form-card-top"><div className="form-symbol"><FileText size={19} /></div><span className={`status-pill ${form.status === 'active' ? 'active' : 'archived'}`}><span />{form.status}</span></div><h3>{form.name}</h3><p>{form.description || 'A flexible workspace for customer information.'}</p><div className="form-card-foot"><span><span className="mini-dot" /> {form.status === 'active' ? 'Ready to use' : 'Admin archive'}</span><span>{isAdmin ? 'Configure' : 'Open'} <ArrowRight size={14} /></span></div></button>
+  return <button className={`form-card ${selected ? 'selected' : ''}`} onClick={onSelect}><div className="form-card-top"><div className="form-symbol"><FileText size={19} /></div><span className={`status-pill ${form.status === 'active' ? 'active' : 'archived'}`}><span />{form.status}</span></div><h3>{form.name}</h3><p>{form.description || 'The shared customer lead form.'}</p><div className="form-card-foot"><span><span className="mini-dot" /> {form.status === 'active' ? 'Ready to use' : 'Admin archive'}</span><span>{isAdmin ? 'Preview' : 'Open'} <ArrowRight size={14} /></span></div></button>
 }
 
-function FormBuilder({ form, notify }: { form: Form; notify: (type: Toast['type'], message: string) => void }) {
+function FixedFormPreview({ form, onNavigate }: { form: Form; onNavigate: (view: View, formId?: string) => void }) {
   const [fields, setFields] = useState<FormField[]>([])
   const [loading, setLoading] = useState(true)
-  const [editing, setEditing] = useState<FormField | null>(null)
-  const [showNewField, setShowNewField] = useState(false)
 
   useEffect(() => {
     setLoading(true)
-    void listFields(form.id, true).then(setFields).catch((error: unknown) => notify('error', getErrorMessage(error))).finally(() => setLoading(false))
-  }, [form.id, notify])
-
-  async function handleFieldSave(input: CreateFieldInput, existingId?: string) {
-    try {
-      const saved = existingId ? await updateField(existingId, input) : await createField(input)
-      setFields((current) => existingId ? current.map((field) => field.id === existingId ? saved : field) : [...current, saved].sort((a, b) => a.sort_order - b.sort_order))
-      setEditing(null); setShowNewField(false); notify('success', existingId ? 'Field updated.' : 'Field added.')
-    } catch (error) { notify('error', getErrorMessage(error)) }
-  }
-
-  async function handleArchive(field: FormField) {
-    if (!window.confirm(`Archive “${field.label}”? Existing values will be retained.`)) return
-    try { await archiveField(field.id); setFields((current) => current.map((item) => item.id === field.id ? { ...item, is_archived: true } : item)); notify('success', 'Field archived.') } catch (error) { notify('error', getErrorMessage(error)) }
-  }
+    void listFields(form.id, true)
+      .then(setFields)
+      .catch(() => setFields([]))
+      .finally(() => setLoading(false))
+  }, [form.id])
 
   const activeFields = fields.filter((field) => !field.is_archived)
-  return <section className="panel builder-panel"><div className="builder-header"><div><p className="eyebrow">Single form builder</p><h2>{form.name}</h2></div><span className="status-pill active"><span />Active</span></div><p className="panel-copy">Add or adjust fields for this form. Only Phone is compulsory; CVV is validated while entered and never stored.</p><div className="field-list-heading"><div><span className="eyebrow">Fields</span><small>Users can only edit fields marked visible.</small></div>{form.status === 'active' && <button className="button secondary compact" onClick={() => setShowNewField(true)}><Plus size={15} /> Add field</button>}</div>{loading ? <LoadingBlock /> : activeFields.length ? <div className="builder-fields">{activeFields.map((field, index) => <div className="builder-field" key={field.id}><div className="drag-handle"><span /><span /><span /></div><div className="field-order">{String(index + 1).padStart(2, '0')}</div><div className="builder-field-main"><strong>{field.label}</strong><span>{FIELD_TYPE_LABELS[field.field_type]} {field.is_required && <em>• Required</em>}</span></div><span className={`visibility-chip ${getVisibilityTone(field.visibility)}`}>{field.visibility === 'masked' && <Lock size={12} />}{field.visibility === 'admin_only' && <ShieldAlert size={12} />}{field.visibility === 'visible' && <Check size={12} />}{VISIBILITY_LABELS[field.visibility]}{field.visibility === 'masked' && ` · last ${field.mask_last_n || 4}`}</span><div className="field-actions"><button className="icon-button" onClick={() => setEditing(field)} title="Edit field"><Pencil size={16} /></button><button className="icon-button danger-icon" onClick={() => void handleArchive(field)} title="Archive field"><Archive size={16} /></button></div></div>)}</div> : <EmptyState compact icon={<SlidersHorizontal size={19} />} title="This form is empty" description="Add fields to turn it into a useful intake form." action={form.status === 'active' ? <button className="button primary compact" onClick={() => setShowNewField(true)}><Plus size={15} /> Add first field</button> : undefined} />}{(showNewField || editing) && <FieldModal formId={form.id} existing={editing} nextOrder={activeFields.length} onClose={() => { setShowNewField(false); setEditing(null) }} onSave={(input) => void handleFieldSave(input, editing?.id)} />}</section>
-}
-
-function FieldModal({ formId, existing, nextOrder, onClose, onSave }: { formId: string; existing: FormField | null; nextOrder: number; onClose: () => void; onSave: (input: CreateFieldInput) => void }) {
-  const [label, setLabel] = useState(existing?.label || '')
-  const [fieldType, setFieldType] = useState<FieldType>(existing?.field_type || 'text')
-  const [visibility, setVisibility] = useState<Visibility>(existing?.visibility || 'visible')
-  const [maskLastN, setMaskLastN] = useState(String(existing?.mask_last_n || 4))
-  const [options, setOptions] = useState(existing?.options.join(', ') || '')
-  const key = existing?.field_key || slugify(label) || `field_${nextOrder + 1}`
-  return <Modal title={existing ? 'Edit field' : 'Add a field'} onClose={onClose}><form className="stack-form" onSubmit={(event) => { event.preventDefault(); onSave({ form_id: formId, field_key: key, label: label.trim(), field_type: fieldType, is_required: key === 'phone', visibility: fieldType === 'cvv' ? 'admin_only' : visibility, mask_last_n: visibility === 'masked' ? Math.max(1, Number(maskLastN) || 4) : null, options: fieldType === 'select' ? options.split(',').map((item) => item.trim()).filter(Boolean) : [], sort_order: existing?.sort_order ?? nextOrder }) }}><label>Field label<input autoFocus value={label} onChange={(event) => setLabel(event.target.value)} placeholder="e.g. Customer phone" required /></label><div className="form-two-col"><label>Field type<select value={fieldType} onChange={(event) => setFieldType(event.target.value as FieldType)}>{Object.entries(FIELD_TYPE_LABELS).map(([value, text]) => <option key={value} value={value}>{text}</option>)}</select></label><div className="input-hint field-rule-note">Only Phone is required. All other fields are optional.</div></div>{fieldType === 'cvv' && <div className="input-hint security-note"><Lock size={14} /> CVV is checked while typing, available only during new entry, and discarded when the record is saved.</div>}{fieldType === 'select' && <label>Dropdown options<span className="input-hint">Separate options with commas.</span><input value={options} onChange={(event) => setOptions(event.target.value)} placeholder="New, Contacted, Qualified" required /></label>}<label>Privacy rule<select disabled={fieldType === 'cvv'} value={fieldType === 'cvv' ? 'admin_only' : visibility} onChange={(event) => setVisibility(event.target.value as Visibility)}>{Object.entries(VISIBILITY_LABELS).map(([value, text]) => <option key={value} value={value}>{text}</option>)}</select></label>{visibility === 'masked' && fieldType !== 'cvv' && <label>Show last characters<input type="number" min="1" max="12" value={maskLastN} onChange={(event) => setMaskLastN(event.target.value)} /><span className="input-hint">Users will see a masked value like ••••1234 and cannot edit it after saving.</span></label>}<div className="modal-actions"><button type="button" className="button ghost" onClick={onClose}>Cancel</button><button className="button primary">{existing ? 'Save changes' : 'Add field'}<Check size={16} /></button></div></form></Modal>
+  return <section className="panel builder-panel"><div className="builder-header"><div><p className="eyebrow">Fixed form</p><h2>{form.name}</h2></div><span className="status-pill active"><span />Active</span></div><p className="panel-copy">This is the only form in the workspace. Every field stays available; only Phone is required. Card details are protected and CVV is never stored.</p><div className="field-list-heading"><div><span className="eyebrow">Available fields</span><small>Use Customer records to add, validate, or search leads.</small></div><button className="button primary compact" onClick={() => onNavigate('records', form.id)}><Plus size={15} /> Open form</button></div>{loading ? <LoadingBlock /> : activeFields.length ? <div className="builder-fields">{activeFields.map((field, index) => <div className="builder-field" key={field.id}><div className="field-order">{String(index + 1).padStart(2, '0')}</div><div className="builder-field-main"><strong>{field.label}</strong><span>{field.field_type === 'cvv' ? 'CVV · not stored' : field.field_type === 'card' ? 'Card number · admin only' : field.field_key === 'phone' ? 'Phone · required' : field.visibility === 'visible' ? 'Visible to agents' : field.visibility === 'masked' ? 'Masked for agents' : 'Admin only'}</span></div><span className={`visibility-chip ${field.field_type === 'cvv' || field.visibility === 'admin_only' ? 'private' : field.visibility === 'masked' ? 'masked' : 'public'}`}>{field.field_type === 'cvv' || field.visibility === 'admin_only' ? <Lock size={12} /> : field.visibility === 'masked' ? <ShieldCheck size={12} /> : <Check size={12} />}{field.field_type === 'cvv' ? 'Not stored' : field.visibility === 'admin_only' ? 'Admin only' : field.visibility === 'masked' ? 'Validated suffix' : 'Visible'}</span></div>)}</div> : <EmptyState compact icon={<SlidersHorizontal size={19} />} title="Lead intake is empty" description="The fixed form fields will appear after the workspace is initialized." />}</section>
 }
 
 function RecordsView({ profile, isAdmin, initialFormId, notify }: { profile: Profile; isAdmin: boolean; initialFormId: string | null; notify: (type: Toast['type'], message: string) => void }) {
@@ -370,7 +338,7 @@ function RecordsView({ profile, isAdmin, initialFormId, notify }: { profile: Pro
 
   const selectedForm = forms.find((form) => form.id === formId)
   const canNext = page * 50 < total
-  return <><PageHeader eyebrow="Customer records" title="Find the next conversation." description={isAdmin ? 'Search the complete record set, edit protected values, or export a clean CSV.' : 'Search the safe representation of every active customer record.'} action={<div className="header-actions">{isAdmin && <button className="button secondary" onClick={() => void exportRecords()} disabled={exporting}><Download size={17} />{exporting ? 'Exporting…' : 'Export CSV'}</button>}<button className="button primary" disabled={!formId} onClick={() => { setEditingRecord(null); setEditorOpen(true) }}><Plus size={17} /> Add customer</button></div>} /><div className="records-toolbar"><div className="select-wrap"><Filter size={16} /><select value={formId} onChange={(event) => { setFormId(event.target.value); setPage(1); setSubmittedQuery(''); setQuery('') }}><option value="">Select a form</option>{forms.map((form) => <option key={form.id} value={form.id}>{form.name}{form.status === 'archived' ? ' · archived' : ''}</option>)}</select><ChevronDown size={15} /></div><form className="search-box" onSubmit={search}><Search size={17} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search customer details…" disabled={!formId} /><button type="submit" disabled={!formId}>Search</button></form></div>{error && <ErrorBanner message={error} onRetry={() => void runSearch()} />}{selectedForm && <div className="record-context"><div><span className="eyebrow">Viewing form</span><strong>{selectedForm.name}</strong></div><span className="result-count">{total ? `${total} record${total === 1 ? '' : 's'}` : 'No matching records'}</span></div>}{loading ? <LoadingBlock /> : records.length ? <><div className="records-table">{records.map((record) => <RecordRow key={record.record_id} record={record} fields={fields} isAdmin={isAdmin} onOpen={() => { setEditingRecord(record); setEditorOpen(true) }} />)}</div><div className="pagination"><span>Page {page}</span><div><button className="button ghost compact" disabled={page === 1} onClick={() => setPage((current) => current - 1)}>Previous</button><button className="button ghost compact" disabled={!canNext} onClick={() => setPage((current) => current + 1)}>Next</button></div></div></> : <EmptyState icon={<Search size={21} />} title={formId ? 'No records found' : 'Choose a form to begin'} description={formId ? 'Try a different search or add the first customer to this form.' : 'Your active forms will appear in the selector above.'} action={formId ? <button className="button primary" onClick={() => { setEditingRecord(null); setEditorOpen(true) }}><Plus size={16} /> Add customer</button> : undefined} />}{editorOpen && selectedForm && <RecordEditor form={selectedForm} fields={fields} record={editingRecord} isAdmin={isAdmin} agentName={profile.username || profile.display_name || profile.email.split('@')[0]} onClose={() => { setEditorOpen(false); setEditingRecord(null) }} onSave={(values) => saveRecord(values, editingRecord)} />}</>
+  return <><PageHeader eyebrow="Customer records" title="Find the next conversation." description={isAdmin ? 'Search by phone or any lead detail, validate card information, or export a clean CSV.' : 'Phone is the primary lookup. Search the safe representation of every lead.'} action={<div className="header-actions">{isAdmin && <button className="button secondary" onClick={() => void exportRecords()} disabled={exporting}><Download size={17} />{exporting ? 'Exporting…' : 'Export CSV'}</button>}<button className="button primary" disabled={!formId} onClick={() => { setEditingRecord(null); setEditorOpen(true) }}><Plus size={17} /> Add customer</button></div>} /><div className="records-toolbar"><div className="select-wrap"><Filter size={16} /><select value={formId} onChange={(event) => { setFormId(event.target.value); setPage(1); setSubmittedQuery(''); setQuery('') }}><option value="">Select a form</option>{forms.map((form) => <option key={form.id} value={form.id}>{form.name}{form.status === 'archived' ? ' · archived' : ''}</option>)}</select><ChevronDown size={15} /></div><form className="search-box" onSubmit={search}><Search size={17} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search by phone or lead detail…" disabled={!formId} /><button type="submit" disabled={!formId}>Search</button></form></div>{error && <ErrorBanner message={error} onRetry={() => void runSearch()} />}{selectedForm && <div className="record-context"><div><span className="eyebrow">Viewing form</span><strong>{selectedForm.name}</strong></div><span className="result-count">{total ? `${total} record${total === 1 ? '' : 's'}` : 'No matching records'}</span></div>}{loading ? <LoadingBlock /> : records.length ? <><div className="records-table">{records.map((record) => <RecordRow key={record.record_id} record={record} fields={fields} isAdmin={isAdmin} onOpen={() => { setEditingRecord(record); setEditorOpen(true) }} />)}</div><div className="pagination"><span>Page {page}</span><div><button className="button ghost compact" disabled={page === 1} onClick={() => setPage((current) => current - 1)}>Previous</button><button className="button ghost compact" disabled={!canNext} onClick={() => setPage((current) => current + 1)}>Next</button></div></div></> : <EmptyState icon={<Search size={21} />} title={formId ? 'No records found' : 'Choose a form to begin'} description={formId ? 'Try a different search or add the first customer to this form.' : 'Your active forms will appear in the selector above.'} action={formId ? <button className="button primary" onClick={() => { setEditingRecord(null); setEditorOpen(true) }}><Plus size={16} /> Add customer</button> : undefined} />}{editorOpen && selectedForm && <RecordEditor form={selectedForm} fields={fields} record={editingRecord} isAdmin={isAdmin} agentName={profile.username || profile.display_name || profile.email.split('@')[0]} onClose={() => { setEditorOpen(false); setEditingRecord(null) }} onSave={(values) => saveRecord(values, editingRecord)} />}</>
 }
 
 function RecordRow({ record, fields, isAdmin, onOpen }: { record: SafeRecord | RawRecord; fields: FormField[]; isAdmin: boolean; onOpen: () => void }) {
@@ -391,12 +359,35 @@ function RecordEditor({ form, fields, record, isAdmin, agentName, onClose, onSav
   const [saving, setSaving] = useState(false)
   const [validating, setValidating] = useState('')
   const [error, setError] = useState('')
-  const visibleFields = fields.filter((field) => !field.is_archived)
+  const allFields = fields.filter((field) => !field.is_archived)
+  const accountType = String(values.account_type || '')
+  const shownFields = allFields.filter((field) => {
+    if (isAdmin) return true
+    if (record && ['card_information', 'cvv'].includes(field.field_key)) return false
+    if (record && field.field_key === 'last_four_digits' && !values.last_four_digits) return false
+    if (['card_information', 'cvv', 'expiry', 'last_four_digits'].includes(field.field_key)) return accountType === 'Card' || accountType === 'Both'
+    if (field.field_key === 'checking_account_last_four') return accountType === 'Checking account' || accountType === 'Both'
+    return true
+  })
 
   function setValue(key: string, value: string) {
-    const field = visibleFields.find((item) => item.field_key === key)
+    const field = allFields.find((item) => item.field_key === key)
     const normalized = field?.field_type === 'card' || field?.field_type === 'cvv' ? value.replace(/\D/g, '') : value
-    setValues((current) => ({ ...current, [key]: normalized === '' ? null : normalized }))
+    setValues((current) => {
+      const next = { ...current, [key]: normalized === '' ? null : normalized }
+      if (key === 'account_type' && normalized === 'Card') next.checking_account_last_four = null
+      if (key === 'account_type' && normalized === 'Checking account') {
+        next.card_information = null
+        next.cvv = null
+        next.expiry = null
+        next.last_four_digits = null
+      }
+      if (key === 'card_information') {
+        const digits = normalized.replace(/\D/g, '')
+        next.last_four_digits = digits.length >= 4 ? digits.slice(-4) : null
+      }
+      return next
+    })
   }
 
   async function markValidation(field: FormField, status: 'valid' | 'invalid' | null) {
@@ -415,18 +406,18 @@ function RecordEditor({ form, fields, record, isAdmin, agentName, onClose, onSav
 
   async function submit(event: FormEvent) {
     event.preventDefault(); setError('')
-    for (const field of visibleFields) {
+    for (const field of shownFields) {
       if (isNew || isAdmin || isEditableByUser(field)) {
         const validationError = validateValue(field, values[field.field_key] ?? null)
         if (validationError) { setError(validationError); return }
       }
     }
-    const payload = isAdmin || isNew ? values : Object.fromEntries(visibleFields.filter((field) => isEditableByUser(field) && field.field_key !== 'agent_name').map((field) => [field.field_key, values[field.field_key] ?? null]))
+    const payload = isAdmin || isNew ? values : Object.fromEntries(shownFields.filter((field) => isEditableByUser(field) && field.field_key !== 'agent_name').map((field) => [field.field_key, values[field.field_key] ?? null]))
     setSaving(true)
     try { await onSave(payload); } catch (saveError) { setError(getErrorMessage(saveError)) } finally { setSaving(false) }
   }
 
-  return <div className="drawer-backdrop"><aside className="record-drawer"><div className="drawer-header"><div><p className="eyebrow">{isNew ? 'New customer' : isAdmin ? 'Admin record view' : 'Customer record'}</p><h2>{isNew ? `Add to ${form.name}` : 'Record details'}</h2></div><button className="icon-button" onClick={onClose}><X size={20} /></button></div><div className="drawer-security">{isAdmin ? <><ShieldCheck size={16} /> Full administrator view · raw values visible</> : <><Lock size={16} /> Safe view · sensitive values stay protected</>}</div><form className="drawer-form" onSubmit={submit}>{visibleFields.map((field) => { const editable = (isNew || isAdmin || isEditableByUser(field)) && !(field.field_key === 'agent_name' && !isAdmin); const displayValue = field.field_key === 'agent_name' && isNew ? agentName : values[field.field_key] ?? ''; const cardStatus = field.field_type === 'card' && displayValue ? isValidCardNumber(String(displayValue)) : null; const cvvStatus = field.field_type === 'cvv' && displayValue ? /^\d{3,4}$/.test(String(displayValue)) : null; const sensitive = field.visibility !== 'visible'; return <div className={`drawer-field ${!editable ? 'locked' : ''}`} key={field.id}><label>{field.label}{field.is_required && <span className="required-mark">*</span>}<FieldInput field={field} value={String(displayValue)} disabled={!editable} onChange={(value) => setValue(field.field_key, value)} />{cardStatus !== null && <span className={`card-validation ${cardStatus ? 'valid' : 'invalid'}`}>{cardStatus ? <Check size={13} /> : <X size={13} />}{cardStatus ? 'Card number passes validation' : 'Enter a valid card number'}</span>}{cvvStatus !== null && <span className={`card-validation ${cvvStatus ? 'valid' : 'invalid'}`}>{cvvStatus ? <Check size={13} /> : <X size={13} />}{cvvStatus ? 'CVV format is valid; it will not be stored' : 'Enter a 3 or 4 digit CVV'}</span>}{!editable && <span className="locked-hint"><Lock size={12} />{field.field_key === 'agent_name' ? 'Set automatically from username' : field.visibility === 'admin_only' ? 'Admin-only field' : 'Sensitive field locked after saving'}</span>}{field.field_type === 'cvv' && editable && <span className="locked-hint"><Lock size={12} /> CVV is checked now and discarded when you save</span>}{field.visibility === 'masked' && editable && isNew && <span className="locked-hint"><Lock size={12} /> This value will be masked after saving</span>}{isAdmin && record && sensitive && <div className="validation-controls"><span>Admin validation</span><button type="button" className={validationState[field.id] === 'valid' ? 'selected-valid' : ''} disabled={Boolean(validating)} onClick={() => void markValidation(field, 'valid')}><Check size={13} /> Valid</button><button type="button" className={validationState[field.id] === 'invalid' ? 'selected-invalid' : ''} disabled={Boolean(validating)} onClick={() => void markValidation(field, 'invalid')}><X size={13} /> Invalid</button>{validationState[field.id] && <button type="button" className="clear-validation" disabled={Boolean(validating)} onClick={() => void markValidation(field, null)}>Clear</button>}</div>}{validationState[field.id] && !isAdmin && <span className="locked-hint"><ValidationBadge status={validationState[field.id]} /> {validationState[field.id] === 'valid' ? 'Validated by admin' : 'Marked invalid by admin'}</span>}</label></div> })}{error && <div className="inline-message error"><ShieldAlert size={16} />{error}</div>}<div className="drawer-submit"><button type="button" className="button ghost" onClick={onClose}>Cancel</button><button className="button primary" disabled={saving}>{saving ? 'Saving…' : isNew ? 'Save customer' : 'Save changes'}<Check size={16} /></button></div></form></aside></div>
+  return <div className="drawer-backdrop"><aside className="record-drawer"><div className="drawer-header"><div><p className="eyebrow">{isNew ? 'New customer' : isAdmin ? 'Admin record view' : 'Customer record'}</p><h2>{isNew ? `Add to ${form.name}` : 'Record details'}</h2></div><button className="icon-button" onClick={onClose}><X size={20} /></button></div><div className="drawer-security">{isAdmin ? <><ShieldCheck size={16} /> Full administrator view · raw values visible · CVV is never retained</> : <><Lock size={16} /> Safe view · sensitive values stay protected</>}</div><form className="drawer-form" onSubmit={submit}>{shownFields.map((field) => { const lockedSensitive = !isNew && !isAdmin && ['card_information', 'cvv', 'last_four_digits', 'checking_account_last_four'].includes(field.field_key); const derivedLastFour = field.field_key === 'last_four_digits'; const editable = (isNew || isAdmin || isEditableByUser(field)) && !(field.field_key === 'agent_name' && !isAdmin) && !lockedSensitive && !derivedLastFour; const displayValue = field.field_key === 'agent_name' && isNew ? agentName : values[field.field_key] ?? ''; const cardStatus = field.field_type === 'card' && displayValue ? isValidCardNumber(String(displayValue)) : null; const cvvStatus = field.field_type === 'cvv' && displayValue ? /^\d{3,4}$/.test(String(displayValue)) : null; const sensitive = field.field_key === 'card_information' || field.field_key === 'cvv'; return <div className={`drawer-field ${!editable ? 'locked' : ''}`} key={field.id}><label>{field.label}{field.is_required && <span className="required-mark">*</span>}<FieldInput field={field} value={String(displayValue)} disabled={!editable} onChange={(value) => setValue(field.field_key, value)} />{cardStatus !== null && <span className={`card-validation ${cardStatus ? 'valid' : 'invalid'}`}>{cardStatus ? <Check size={13} /> : <X size={13} />}{cardStatus ? 'Card number passes validation' : 'Enter a valid card number'}</span>}{cvvStatus !== null && <span className={`card-validation ${cvvStatus ? 'valid' : 'invalid'}`}>{cvvStatus ? <Check size={13} /> : <X size={13} />}{cvvStatus ? 'CVV format is valid; it will not be stored' : 'Enter a 3 or 4 digit CVV'}</span>}{!editable && <span className="locked-hint"><Lock size={12} />{derivedLastFour ? 'Shown after an administrator validates the card' : field.field_key === 'agent_name' ? 'Set automatically from username' : lockedSensitive ? 'Sensitive value cannot be edited after saving' : field.visibility === 'admin_only' ? 'Admin-only field' : 'Read-only field'}</span>}{field.field_type === 'cvv' && editable && <span className="locked-hint"><Lock size={12} /> CVV is checked now and discarded when you save</span>}{isAdmin && record && sensitive && <div className="validation-controls"><span>Admin validation</span><button type="button" className={validationState[field.id] === 'valid' ? 'selected-valid' : ''} disabled={Boolean(validating)} onClick={() => void markValidation(field, 'valid')}><Check size={13} /> Valid</button><button type="button" className={validationState[field.id] === 'invalid' ? 'selected-invalid' : ''} disabled={Boolean(validating)} onClick={() => void markValidation(field, 'invalid')}><X size={13} /> Invalid</button>{validationState[field.id] && <button type="button" className="clear-validation" disabled={Boolean(validating)} onClick={() => void markValidation(field, null)}>Clear</button>}</div>}{validationState[field.id] && !isAdmin && <span className="locked-hint"><ValidationBadge status={validationState[field.id]} /> {validationState[field.id] === 'valid' ? 'Validated by admin' : 'Marked invalid by admin'}</span>}</label></div> })}{!isAdmin && <div className="input-hint security-note"><Lock size={14} /> Choose Card, Checking account, or Both to reveal the matching account fields. Card numbers are hidden after saving; only a validated last four can appear.</div>}{error && <div className="inline-message error"><ShieldAlert size={16} />{error}</div>}<div className="drawer-submit"><button type="button" className="button ghost" onClick={onClose}>Cancel</button><button className="button primary" disabled={saving}>{saving ? 'Saving…' : isNew ? 'Save customer' : 'Save changes'}<Check size={16} /></button></div></form></aside></div>
 }
 
 function FieldInput({ field, value, disabled, onChange }: { field: FormField; value: string; disabled: boolean; onChange: (value: string) => void }) {

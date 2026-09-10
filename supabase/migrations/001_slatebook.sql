@@ -213,12 +213,7 @@ create policy fields_select on public.form_fields for select to authenticated
     and (public.is_admin() or (is_archived = false and exists (select 1 from public.forms f where f.id = form_id and f.status = 'active')))
   );
 drop policy if exists fields_insert on public.form_fields;
-create policy fields_insert on public.form_fields for insert to authenticated
-  with check (public.is_admin() and exists (select 1 from public.forms f where f.id = form_id and f.name = 'Lead intake' and f.status = 'active'));
 drop policy if exists fields_update on public.form_fields;
-create policy fields_update on public.form_fields for update to authenticated
-  using (public.is_admin() and exists (select 1 from public.forms f where f.id = form_id and f.name = 'Lead intake' and f.status = 'active'))
-  with check (public.is_admin() and exists (select 1 from public.forms f where f.id = form_id and f.name = 'Lead intake' and f.status = 'active'));
 
 drop policy if exists records_select on public.customer_records;
 create policy records_select on public.customer_records for select to authenticated
@@ -241,7 +236,7 @@ create policy record_validations_select on public.customer_record_validations fo
 
 grant usage on schema public to authenticated;
 grant select on public.profiles, public.forms, public.form_fields, public.customer_records, public.customer_record_values, public.customer_safe_projection, public.customer_record_validations to authenticated;
-grant insert, update on public.forms, public.form_fields to authenticated;
+revoke insert, update on public.forms, public.form_fields from authenticated;
 revoke insert, update, delete on public.customer_records, public.customer_record_values, public.customer_safe_projection from authenticated;
 
 create or replace function public.is_valid_card_number(input text)
@@ -555,13 +550,14 @@ begin
     (lead_form_id, 'phone', 'Phone', 'phone', true, 'visible', null, '[]', 3),
     (lead_form_id, 'card_information', 'Card information', 'card', false, 'admin_only', null, '[]', 4),
     (lead_form_id, 'cvv', 'CVV (not stored)', 'cvv', false, 'admin_only', null, '[]', 5),
-    (lead_form_id, 'expiry', 'Card expiry', 'expiry', false, 'admin_only', null, '[]', 6),
-    (lead_form_id, 'zipcode', 'Zip code', 'text', false, 'admin_only', null, '[]', 7),
-    (lead_form_id, 'account_type', 'Last four belongs to', 'select', false, 'visible', null, '["Card", "Checking account", "Both"]', 8),
-    (lead_form_id, 'last_four_digits', 'Last four digits', 'text', false, 'masked', 4, '[]', 9),
-    (lead_form_id, 'comments', 'Comments', 'textarea', false, 'visible', null, '[]', 10),
-    (lead_form_id, 'lead_status', 'Lead status', 'select', false, 'visible', null, '["New", "Contacted", "Qualified", "Converted", "Lost"]', 11),
-    (lead_form_id, 'agent_name', 'Agent name', 'text', false, 'visible', null, '[]', 12);
+    (lead_form_id, 'expiry', 'Card expiry', 'expiry', false, 'visible', null, '[]', 6),
+    (lead_form_id, 'zipcode', 'Zip code', 'text', false, 'visible', null, '[]', 7),
+    (lead_form_id, 'account_type', 'Account type', 'select', false, 'visible', null, '["Card", "Checking account", "Both"]', 8),
+    (lead_form_id, 'last_four_digits', 'Card last 4 digits', 'text', false, 'visible', null, '[]', 9),
+    (lead_form_id, 'checking_account_last_four', 'Checking account last 4 digits', 'text', false, 'visible', null, '[]', 10),
+    (lead_form_id, 'comments', 'Comments', 'textarea', false, 'visible', null, '[]', 11),
+    (lead_form_id, 'lead_status', 'Lead status', 'select', false, 'visible', null, '["New", "Contacted", "Qualified", "Converted", "Lost"]', 12),
+    (lead_form_id, 'agent_name', 'Agent name', 'text', false, 'visible', null, '[]', 13);
   return lead_form_id;
 end;
 $$;
