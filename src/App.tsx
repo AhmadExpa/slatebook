@@ -271,7 +271,7 @@ function Workspace({ profile, onProfileChange, onSignOut }: { profile: Profile; 
   }
 
   return (
-    <div className="app-shell">
+    <div className="app-shell admin-workspace">
       <aside className={`sidebar ${mobileNav ? 'open' : ''}`}>
         <div className="sidebar-top"><div className="brand-lockup"><div className="brand-mark"><BookOpen size={20} /></div><span>Eleven Notepad</span></div><button className="icon-button mobile-close" onClick={() => setMobileNav(false)}><X size={19} /></button></div>
         <div className="workspace-switcher"><div className="workspace-avatar">E</div><div><strong>Eleven Notepad HQ</strong><span>Private workspace</span></div><ChevronDown size={16} /></div>
