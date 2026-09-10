@@ -74,6 +74,14 @@ export async function searchSafeRecords(formId: string, query: string, page: num
   return unwrap((data || []) as SafeRecord[], error)
 }
 
+export async function listRecentUserRecords(formId: string, limit = 5): Promise<SafeRecord[]> {
+  const { data, error } = await getSupabase().rpc('list_recent_user_records', {
+    p_form_id: formId,
+    p_limit: limit,
+  })
+  return unwrap((data || []) as SafeRecord[], error)
+}
+
 export async function searchAdminRecords(formId: string | null, query: string, page: number, pageSize = 50): Promise<RawRecord[]> {
   const { data, error } = await getSupabase().rpc('search_admin_records', {
     p_form_id: formId,

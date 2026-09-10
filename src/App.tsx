@@ -35,6 +35,7 @@ import {
   createUser,
   listFields,
   listForms,
+  listRecentUserRecords,
   listUsers,
   manageUser,
   searchAdminRecords,
@@ -54,7 +55,7 @@ import {
   type Role,
   type SafeRecord,
 } from './lib/types'
-import { fieldInputType, formatDate, formatDateTime, initials, isEditableByUser, isValidCardNumber, normalizeLoginIdentifier, validateValue } from './lib/utils'
+import { fieldInputType, formatCardInput, formatDate, formatDateTime, formatExpiryInput, initials, isEditableByUser, isValidCardNumber, normalizeLoginIdentifier, validateValue } from './lib/utils'
 
 type View = 'overview' | 'records' | 'forms' | 'users'
 type Toast = { type: 'success' | 'error'; message: string }
@@ -102,6 +103,7 @@ function App() {
   if (!sessionReady) return <LoadingScreen label="Warming up your workspace" />
   if (!session) return <LoginView initialError={authError} />
   if (!profile) return <LoadingScreen label="Loading your workspace" error={authError} />
+  if (profile.role !== 'admin') return <AgentPortal profile={profile} onSignOut={() => void getSupabase().auth.signOut()} />
 
   return (
     <Workspace
@@ -167,6 +169,88 @@ function LoginView({ initialError }: { initialError: string }) {
       <div className="auth-panel"><div className="auth-form-wrap"><p className="eyebrow">Welcome to Slatebook</p><h1>{mode === 'login' ? 'Good to see you.' : 'Reset your password.'}</h1><p className="muted-copy">{mode === 'login' ? 'Sign in with the username and password given to you by an administrator.' : 'Email accounts can receive a secure reset link. Username accounts are reset by an administrator.'}</p><form onSubmit={submit} className="stack-form"><label>{mode === 'login' ? 'Username or email' : 'Email address'}<input autoFocus type={mode === 'login' ? 'text' : 'email'} value={identifier} onChange={(event) => setIdentifier(event.target.value)} placeholder={mode === 'login' ? 'jordan.lee' : 'you@company.com'} required /></label>{mode === 'login' && <label>Password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Enter your password" required minLength={6} /></label>}{message && <div className={`inline-message ${message.includes('way') ? 'success' : 'error'}`}><ShieldAlert size={16} />{message}</div>}<button className="button primary full" disabled={busy}>{busy ? 'Please wait…' : mode === 'login' ? 'Sign in' : 'Send reset link'}<ArrowRight size={17} /></button></form><button className="text-button" onClick={() => { setMode(mode === 'login' ? 'reset' : 'login'); setMessage('') }}>{mode === 'login' ? 'Forgot your password?' : 'Back to sign in'}</button><p className="auth-footnote"><Lock size={14} /> Your workspace uses database-level access rules.</p></div></div>
     </div>
   )
+}
+
+function AgentPortal({ profile, onSignOut }: { profile: Profile; onSignOut: () => void }) {
+  const [form, setForm] = useState<Form | null>(null)
+  const [fields, setFields] = useState<FormField[]>([])
+  const [latestLeads, setLatestLeads] = useState<SafeRecord[]>([])
+  const [searchResults, setSearchResults] = useState<SafeRecord[]>([])
+  const [query, setQuery] = useState('')
+  const [searched, setSearched] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [searching, setSearching] = useState(false)
+  const [error, setError] = useState('')
+  const [editorOpen, setEditorOpen] = useState(false)
+  const [editingRecord, setEditingRecord] = useState<SafeRecord | null>(null)
+
+  async function loadPortal() {
+    setLoading(true)
+    setError('')
+    try {
+      const nextForm = (await listForms(false))[0]
+      if (!nextForm) throw new Error('The Lead intake form is not ready yet. Ask an administrator to open the workspace once.')
+      setForm(nextForm)
+      setFields(await listFields(nextForm.id))
+      setLatestLeads(await listRecentUserRecords(nextForm.id, 5))
+    } catch (loadError) {
+      setError(getErrorMessage(loadError))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => { void loadPortal() }, [])
+
+  async function runSearch(term = query.trim()) {
+    if (!form) return
+    if (!term) {
+      setSearched(false)
+      setSearchResults([])
+      return
+    }
+    setSearching(true)
+    setError('')
+    try {
+      setSearchResults(await searchSafeRecords(form.id, term, 1, 25))
+      setSearched(true)
+    } catch (searchError) {
+      setError(getErrorMessage(searchError))
+    } finally {
+      setSearching(false)
+    }
+  }
+
+  async function refreshLatest() {
+    if (!form) return
+    setLatestLeads(await listRecentUserRecords(form.id, 5))
+  }
+
+  async function saveLead(values: FieldValues, record: SafeRecord | null) {
+    if (!form) return
+    if (record) {
+      await updateSafeFields(record.record_id, values, record.updated_at)
+    } else {
+      await createCustomerRecord(form.id, values)
+    }
+    setEditorOpen(false)
+    setEditingRecord(null)
+    await refreshLatest()
+    if (searched && query.trim()) await runSearch(query.trim())
+  }
+
+  const visibleLeads = searched ? searchResults : latestLeads
+  return <div className="agent-portal"><header className="agent-header"><div className="brand-lockup"><div className="brand-mark"><BookOpen size={20} /></div><span>slatebook</span></div><div className="agent-account"><span>{profile.username || profile.display_name || profile.email.split('@')[0]}</span><button className="icon-button" onClick={onSignOut} title="Sign out"><LogOut size={17} /></button></div></header><main className="agent-main"><section className="agent-hero"><p className="eyebrow">Private lead portal</p><h1>Find a lead.</h1><p className="muted-copy">Search by phone number, or add a new lead using the fixed form.</p><form className="agent-search" onSubmit={(event) => { event.preventDefault(); void runSearch() }}><Search size={21} /><input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search by phone number…" aria-label="Search leads by phone number" /><button type="submit" disabled={!form || searching}>{searching ? 'Searching…' : 'Search'}</button></form><button className="button primary agent-add-button" disabled={!form} onClick={() => { setEditingRecord(null); setEditorOpen(true) }}><Plus size={17} /> Add new lead</button></section>{error && <ErrorBanner message={error} onRetry={() => void loadPortal()} />}{loading ? <LoadingBlock /> : <section className="agent-feed"><div className="agent-feed-heading"><div><p className="eyebrow">{searched ? 'Search results' : 'Your latest leads'}</p><h2>{searched ? `${searchResults.length} lead${searchResults.length === 1 ? '' : 's'} found` : 'Recently added by you'}</h2></div>{searched && <button className="text-button" onClick={() => { setQuery(''); setSearched(false); setSearchResults([]) }}>Clear search</button>}</div>{visibleLeads.length ? <div className="agent-lead-grid">{visibleLeads.map((lead) => <AgentLeadCard key={lead.record_id} record={lead} fields={fields} onOpen={() => { setEditingRecord(lead); setEditorOpen(true) }} />)}</div> : <div className="agent-empty"><FileText size={20} /><strong>{searched ? 'No matching lead' : 'No leads added yet'}</strong><span>{searched ? 'Try another phone number or lead detail.' : 'Your newest leads will appear here after you add them.'}</span></div>}</section>}{editorOpen && form && <RecordEditor form={form} fields={fields} record={editingRecord} isAdmin={false} agentName={profile.username || profile.display_name || profile.email.split('@')[0]} onClose={() => { setEditorOpen(false); setEditingRecord(null) }} onSave={(values) => saveLead(values, editingRecord)} />}</main></div>
+}
+
+function AgentLeadCard({ record, fields, onOpen }: { record: SafeRecord; fields: FormField[]; onOpen: () => void }) {
+  const values = record.safe_values
+  const name = [values.first_name, values.last_name].filter(Boolean).join(' ') || 'Lead without a name'
+  const phone = values.phone ? String(values.phone) : 'Phone not entered'
+  const status = values.lead_status ? String(values.lead_status) : 'New'
+  const cardField = fields.find((field) => field.field_key === 'card_information')
+  const cardValidated = Boolean(cardField && record.validations?.[cardField.id] === 'valid')
+  return <button className="agent-lead-card" onClick={onOpen}><div className="agent-lead-card-top"><span className="agent-lead-initial">{name.slice(0, 1).toUpperCase()}</span><span className="agent-lead-status">{status}</span></div><strong>{name}</strong><span className="agent-lead-phone">{phone}</span><div className="agent-lead-meta"><span>{formatDateTime(record.updated_at)}</span>{cardValidated && <span className="agent-valid-card"><ValidationBadge status="valid" /> Card validated · {values.last_four_digits ? `••••${values.last_four_digits}` : 'last four protected'}</span>}</div></button>
 }
 
 function Workspace({ profile, onProfileChange, onSignOut }: { profile: Profile; onProfileChange: (profile: Profile) => void; onSignOut: () => void }) {
@@ -372,7 +456,7 @@ function RecordEditor({ form, fields, record, isAdmin, agentName, onClose, onSav
 
   function setValue(key: string, value: string) {
     const field = allFields.find((item) => item.field_key === key)
-    const normalized = field?.field_type === 'card' || field?.field_type === 'cvv' ? value.replace(/\D/g, '') : value
+    const normalized = field?.field_type === 'card' ? formatCardInput(value) : field?.field_type === 'expiry' ? formatExpiryInput(value) : field?.field_type === 'cvv' ? value.replace(/\D/g, '') : value
     setValues((current) => {
       const next = { ...current, [key]: normalized === '' ? null : normalized }
       if (key === 'account_type' && normalized === 'Card') next.checking_account_last_four = null
@@ -423,7 +507,7 @@ function RecordEditor({ form, fields, record, isAdmin, agentName, onClose, onSav
 function FieldInput({ field, value, disabled, onChange }: { field: FormField; value: string; disabled: boolean; onChange: (value: string) => void }) {
   if (field.field_type === 'textarea') return <textarea rows={4} value={value} disabled={disabled} onChange={(event) => onChange(event.target.value)} placeholder={`Enter ${field.label.toLowerCase()}`} />
   if (field.field_type === 'select') return <select value={value} disabled={disabled} onChange={(event) => onChange(event.target.value)}><option value="">Choose an option</option>{field.options.map((option) => <option key={option} value={option}>{option}</option>)}</select>
-  return <input type={fieldInputType(field.field_type)} inputMode={field.field_type === 'card' || field.field_type === 'cvv' ? 'numeric' : undefined} autoComplete={field.field_type === 'card' || field.field_type === 'cvv' ? 'off' : undefined} maxLength={field.field_type === 'card' ? 19 : field.field_type === 'cvv' ? 4 : undefined} value={value} disabled={disabled} onChange={(event) => onChange(event.target.value)} placeholder={field.field_type === 'expiry' ? 'MM/YY' : `Enter ${field.label.toLowerCase()}`} />
+  return <input type={fieldInputType(field.field_type)} inputMode={field.field_type === 'card' || field.field_type === 'cvv' || field.field_type === 'expiry' ? 'numeric' : undefined} autoComplete={field.field_type === 'card' || field.field_type === 'cvv' ? 'off' : undefined} maxLength={field.field_type === 'card' ? 23 : field.field_type === 'expiry' ? 5 : field.field_type === 'cvv' ? 4 : undefined} value={value} disabled={disabled} onChange={(event) => onChange(event.target.value)} placeholder={field.field_type === 'expiry' ? 'MM/YY' : `Enter ${field.label.toLowerCase()}`} />
 }
 
 function UsersView({ currentUser, notify, onProfileChange }: { currentUser: Profile; notify: (type: Toast['type'], message: string) => void; onProfileChange: (profile: Profile) => void }) {

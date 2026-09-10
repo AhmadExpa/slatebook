@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isEditableByUser, isValidCardNumber, normalizeLoginIdentifier, sanitizeDisplayValue, toCsvCell, validateValue } from './utils'
+import { formatCardInput, formatExpiryInput, isEditableByUser, isValidCardNumber, normalizeLoginIdentifier, sanitizeDisplayValue, toCsvCell, validateValue } from './utils'
 import type { FormField } from './types'
 
 const baseField: FormField = {
@@ -51,6 +51,18 @@ describe('username login', () => {
   it('maps usernames to the internal Auth email alias', () => {
     expect(normalizeLoginIdentifier(' Jordan.Lee ')).toBe('jordan.lee@users.slatebook.local')
     expect(normalizeLoginIdentifier('Admin@company.com')).toBe('admin@company.com')
+  })
+})
+
+describe('input formatting', () => {
+  it('groups card digits as they are entered', () => {
+    expect(formatCardInput('4111111111111111')).toBe('4111-1111-1111-1111')
+    expect(formatCardInput('4111-1111 1111')).toBe('4111-1111-1111')
+  })
+
+  it('normalizes three or four expiry digits to MM/YY', () => {
+    expect(formatExpiryInput('927')).toBe('09/27')
+    expect(formatExpiryInput('0927')).toBe('09/27')
   })
 })
 

@@ -85,6 +85,19 @@ export function isValidCardNumber(value: string): boolean {
   return sum % 10 === 0
 }
 
+export function formatCardInput(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 19)
+  return digits.match(/.{1,4}/g)?.join('-') || ''
+}
+
+export function formatExpiryInput(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 4)
+  if (digits.length < 3) return digits
+  const month = digits.length === 3 ? `0${digits[0]}` : digits.slice(0, 2)
+  const year = digits.length === 3 ? digits.slice(1) : digits.slice(2)
+  return `${month}/${year}`
+}
+
 export function sanitizeDisplayValue(field: FormField, value: FieldValue, isAdmin: boolean): string {
   if (value === null || value === undefined || value === '') return '—'
   if (isAdmin || field.visibility === 'visible') return String(value)

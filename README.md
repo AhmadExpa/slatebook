@@ -5,7 +5,7 @@ Slatebook is a Vercel-ready secure customer lead notepad. The browser app is a R
 ## Local setup
 
 1. Copy `.env.example` to `.env.local` and add the Supabase project URL and publishable key. The supplied project values are already in the ignored `.env.local` file in this workspace.
-2. Run `supabase/migrations/001_slatebook.sql` in the Supabase SQL editor. If this project already has the original Slatebook schema, run `003_direct_user_accounts.sql`, `004_single_form_optional_fields.sql`, `005_fixed_lead_form_card_flow.sql`, `006_agent_name_username.sql`, and `007_remove_cvv_from_form.sql` instead of rerunning 001. If you created Auth users before running 001, also run `002_backfill_profiles.sql`.
+2. Run `supabase/migrations/001_slatebook.sql` in the Supabase SQL editor. If this project already has the original Slatebook schema, run `003_direct_user_accounts.sql`, `004_single_form_optional_fields.sql`, `005_fixed_lead_form_card_flow.sql`, `006_agent_name_username.sql`, `007_remove_cvv_from_form.sql`, and `008_agent_recent_leads.sql` instead of rerunning 001. If you created Auth users before running 001, also run `002_backfill_profiles.sql`.
 3. Create your first administrator in Supabase Dashboard → Authentication → Users → Add user. Use the email and set a password.
 4. In the SQL editor, replace the email in `supabase/bootstrap-admin.sql` and run it.
 5. Deploy the two functions from the project root:
