@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
       .maybeSingle()
     if (profileError || !profile) {
       await access.adminClient.auth.admin.deleteUser(created.user.id)
-      return json({ error: profileError?.message || 'The Auth account was created but its Slatebook profile could not be prepared.' }, 400)
+      return json({ error: profileError?.message || 'The Auth account was created but its Eleven Notepad profile could not be prepared.' }, 400)
     }
 
     return json({ ok: true, user_id: created.user.id, username, role })

@@ -9,7 +9,7 @@ function unwrap<T>(data: T, error: { message?: string } | null): T {
 export async function getProfile(userId: string): Promise<Profile> {
   const { data, error } = await getSupabase().from('profiles').select('*').eq('id', userId).maybeSingle()
   if (error) throw new Error(error.message)
-  if (!data) throw new Error(`No Slatebook profile was found for the signed-in user ${userId}. Check this UUID in Supabase Authentication → Users, then run the backfill/bootstrap SQL for that exact user.`)
+  if (!data) throw new Error(`No Eleven Notepad profile was found for the signed-in user ${userId}. Check this UUID in Supabase Authentication → Users, then run the backfill/bootstrap SQL for that exact user.`)
   return data as Profile
 }
 
